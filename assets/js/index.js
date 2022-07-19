@@ -1,16 +1,16 @@
 // create Agora client
 var client = AgoraRTC.createClient({
-  mode: "live",
-  codec: "vp8"
+  mode: 'live',
+  codec: 'vp8',
 });
 var localTracks = {
   videoTrack: null,
-  audioTrack: null
+  audioTrack: null,
 };
 var localTrackState = {
   videoTrackEnabled: true,
-  audioTrackEnabled: true
-}
+  audioTrackEnabled: true,
+};
 var remoteUsers = {};
 // Agora client options
 var options = {
@@ -18,67 +18,70 @@ var options = {
   channel: null,
   uid: null,
   token: null,
-  role: "audience" // host or audience
+  role: 'audience', // host or audience
 };
 
-$("#host-join").click(function (e) {
-  options.role = "host";
-})
+$('#host-join').click(function (e) {
+  options.role = 'host';
+});
 
-$("#audience-join").click(function (e) {
-  options.role = "audience";
-})
+$('#audience-join').click(function (e) {
+  options.role = 'audience';
+});
 
-$("#join-form").submit(async function (e) {
+$('#join-form').submit(async function (e) {
   e.preventDefault();
-  $("#host-join").attr("disabled", true);
-  $("#audience-join").attr("disabled", true);
+  $('#host-join').attr('disabled', true);
+  $('#audience-join').attr('disabled', true);
   try {
-    options.appid = $("#appid").val();
-    options.channel = $("#channel").val();
+    options.appid = $('#appid').val();
+    options.channel = $('#channel').val();
     await join();
   } catch (error) {
     console.error(error);
   } finally {
-    $("#leave").attr("disabled", false);
+    $('#leave').attr('disabled', false);
   }
-})
+});
 
-$("#leave").click(function (e) {
+$('#leave').click(function (e) {
   leave();
-})
+});
 
 async function join() {
   // create Agora client
   client.setClientRole(options.role);
-  $("#mic-btn").prop("disabled", false);
-  $("#video-btn").prop("disabled", false);
-  if (options.role === "audience") {
-    $("#mic-btn").prop("disabled", true);
-    $("#video-btn").prop("disabled", true);
+  $('#mic-btn').prop('disabled', false);
+  $('#video-btn').prop('disabled', false);
+  if (options.role === 'audience') {
+    $('#mic-btn').prop('disabled', true);
+    $('#video-btn').prop('disabled', true);
+    $('#raise-hand-div').append(
+      `<button id="raise-hand" type="button" class="btn btn-live btn-sm" disabled>Raise Hand</button>`
+    );
     // add event listener to play remote tracks when remote user publishs.
-    client.on("user-published", handleUserPublished);
-    client.on("user-joined", handleUserJoined);
-    client.on("user-left", handleUserLeft);
+    client.on('user-published', handleUserPublished);
+    client.on('user-joined', handleUserJoined);
+    client.on('user-left', handleUserLeft);
   }
   // join the channel
   options.uid = await client.join(options.appid, options.channel, options.token || null);
-  if (options.role === "host") {
+  if (options.role === 'host') {
     $('#mic-btn').prop('disabled', false);
     $('#video-btn').prop('disabled', false);
-    client.on("user-published", handleUserPublished);
-    client.on("user-joined", handleUserJoined);
-    client.on("user-left", handleUserLeft);
+    client.on('user-published', handleUserPublished);
+    client.on('user-joined', handleUserJoined);
+    client.on('user-left', handleUserLeft);
     // create local audio and video tracks
     localTracks.audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
     localTracks.videoTrack = await AgoraRTC.createCameraVideoTrack();
     showMuteButton();
     // play local video track
-    localTracks.videoTrack.play("local-player");
-    $("#local-player-name").text(`localTrack(${options.uid})`);
+    localTracks.videoTrack.play('local-player');
+    $('#local-player-name').text(`localTrack(${options.uid})`);
     // publish local tracks to channel
     await client.publish(Object.values(localTracks));
-    console.log("Successfully published.");
+    console.log('Successfully published.');
   }
 }
 
@@ -95,22 +98,22 @@ async function leave() {
   }
   // remove remote users and player views
   remoteUsers = {};
-  $("#remote-playerlist").html("");
+  $('#remote-playerlist').html('');
   // leave the channel
   await client.leave();
-  $("#local-player-name").text("");
-  $("#host-join").attr("disabled", false);
-  $("#audience-join").attr("disabled", false);
-  $("#leave").attr("disabled", true);
+  $('#local-player-name').text('');
+  $('#host-join').attr('disabled', false);
+  $('#audience-join').attr('disabled', false);
+  $('#leave').attr('disabled', true);
   hideMuteButton();
-  console.log("Client successfully left channel.");
+  console.log('Client successfully left channel.');
 }
 
 async function subscribe(user, mediaType) {
   const uid = user.uid;
   // subscribe to a remote user
   await client.subscribe(user, mediaType);
-  console.log("Successfully subscribed.");
+  console.log('Successfully subscribed.');
   if (mediaType === 'video') {
     const player = $(`
       <div id="player-wrapper-${uid}">
@@ -118,7 +121,7 @@ async function subscribe(user, mediaType) {
         <div id="player-${uid}" class="player"></div>
       </div>
     `);
-    $("#remote-playerlist").append(player);
+    $('#remote-playerlist').append(player);
     user.videoTrack.play(`player-${uid}`);
   }
   if (mediaType === 'audio') {
@@ -148,7 +151,7 @@ function handleUserLeft(user) {
 }
 
 // Mute audio click
-$("#mic-btn").click(function (e) {
+$('#mic-btn').click(function (e) {
   if (localTrackState.audioTrackEnabled) {
     muteAudio();
   } else {
@@ -157,24 +160,24 @@ $("#mic-btn").click(function (e) {
 });
 
 // Mute video click
-$("#video-btn").click(function (e) {
+$('#video-btn').click(function (e) {
   if (localTrackState.videoTrackEnabled) {
     muteVideo();
   } else {
     unmuteVideo();
   }
-})
+});
 
 // Hide mute buttons
 function hideMuteButton() {
-  $("#video-btn").css("display", "none");
-  $("#mic-btn").css("display", "none");
+  $('#video-btn').css('display', 'none');
+  $('#mic-btn').css('display', 'none');
 }
 
 // Show mute buttons
 function showMuteButton() {
-  $("#video-btn").css("display", "inline-block");
-  $("#mic-btn").css("display", "inline-block");
+  $('#video-btn').css('display', 'inline-block');
+  $('#mic-btn').css('display', 'inline-block');
 }
 
 // Mute audio function
@@ -182,7 +185,7 @@ async function muteAudio() {
   if (!localTracks.audioTrack) return;
   await localTracks.audioTrack.setEnabled(false);
   localTrackState.audioTrackEnabled = false;
-  $("#mic-btn").text("Unmute Audio");
+  $('#mic-btn').text('Unmute Audio');
 }
 
 // Mute video function
@@ -190,7 +193,7 @@ async function muteVideo() {
   if (!localTracks.videoTrack) return;
   await localTracks.videoTrack.setEnabled(false);
   localTrackState.videoTrackEnabled = false;
-  $("#video-btn").text("Unmute Video");
+  $('#video-btn').text('Unmute Video');
 }
 
 // Unmute audio function
@@ -198,7 +201,7 @@ async function unmuteAudio() {
   if (!localTracks.audioTrack) return;
   await localTracks.audioTrack.setEnabled(true);
   localTrackState.audioTrackEnabled = true;
-  $("#mic-btn").text("Mute Audio");
+  $('#mic-btn').text('Mute Audio');
 }
 
 // Unmute video function
@@ -206,5 +209,5 @@ async function unmuteVideo() {
   if (!localTracks.videoTrack) return;
   await localTracks.videoTrack.setEnabled(true);
   localTrackState.videoTrackEnabled = true;
-  $("#video-btn").text("Mute Video");
+  $('#video-btn').text('Mute Video');
 }
